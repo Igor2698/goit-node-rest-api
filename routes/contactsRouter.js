@@ -5,8 +5,9 @@ import {
     deleteContact,
     createContact,
     updateContact,
+    updateFavorit
 } from "../controllers/contactsControllers.js";
-import { validateAddContactBody, validateChangeContactBody } from "../shemas/contactsSchemas.js";
+import { validateAddContactBody, validateChangeContactBody, validateChangeFavoriteBody } from "../shemas/contactsSchemas.js";
 
 
 
@@ -21,5 +22,7 @@ contactsRouter.delete("/:id", deleteContact);
 contactsRouter.post("/", validateAddContactBody, createContact);
 
 contactsRouter.put("/:id", validateChangeContactBody, updateContact);
+
+contactsRouter.patch("/:id/favorite", validateChangeFavoriteBody, updateFavorit)
 
 export default contactsRouter;
