@@ -8,10 +8,8 @@ import {
     updateContact,
     updateFavorit
 } from "../controllers/contactsControllers.js";
+
 import { validateAddContactBody, validateChangeContactBody, validateChangeFavoriteBody } from "../shemas/contactsSchemas.js";
-import { isValidId } from "../middlewares/isValidId.js";
-
-
 
 const contactsRouter = express.Router();
 
