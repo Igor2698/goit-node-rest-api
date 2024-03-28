@@ -11,8 +11,7 @@ const contactSchema = new Schema({
         type: String,
     },
     phone: {
-        type: String,
-        match: '/^\d+$/'
+        type: Number,
     },
     favorite: {
         type: Boolean,
