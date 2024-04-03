@@ -13,7 +13,7 @@ const authRouter = express.Router();
 authRouter.post('/register', validateRegisterBody, register)
 authRouter.post('/login', validateLoginBody, login)
 authRouter.get("/current", authenticate, getCurrent);
-authRouter.get('/logout', authenticate, logout)
+authRouter.post('/logout', authenticate, logout)
 authRouter.patch('/users', validateUpdateSubscription, authenticate, updateSubscription)
 
 

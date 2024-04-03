@@ -11,7 +11,6 @@ const { SECRET_KEY } = process.env;
 export const register = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-
     if (user) {
         throw HttpError(409, "Email is already in use")
     }
@@ -19,7 +18,14 @@ export const register = async (req, res) => {
     const hashPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({ ...req.body, password: hashPassword });
 
-    res.status(201).json({ email: newUser.email, name: newUser.name, subscription: "starter" })
+    res.status(201).json({
+        user: {
+            email: newUser.email,
+            subscription: "starter"
+        }
+    }
+
+    )
 }
 
 export const login = async (req, res) => {
@@ -54,7 +60,7 @@ export const getCurrent = async (req, res) => {
     const { email, name } = req.user;
     res.json({
         email,
-        name,
+        subscription,
     })
 }
 
@@ -62,11 +68,7 @@ export const getCurrent = async (req, res) => {
 export const logout = async (req, res) => {
     const { _id } = req.user;
     await User.findByIdAndUpdate(_id, { token: '' });
-
-    res.json({
-        message: "Logout success"
-    })
-
+    res.status(201)
 }
 
 export const updateSubscription = async (req, res) => {
