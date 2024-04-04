@@ -79,13 +79,17 @@ export const createContact = async (req, res, next) => {
 
 export const updateContact = async (req, res, next) => {
     try {
+        console.log(req.params)
         const { id } = req.params;
         const { _id } = req.user;
+        console.log(_id)
+
+
         const fielsInRequest = Object.keys(req.body).length
         if (!fielsInRequest) {
             throw HttpError(400, "Body must have at least one field")
         }
-        const result = await Contact.findOneAndUpdate({ _id: id, owner: _id }, req.body, { new: true });
+ const result = await Contact.findOneAndUpdate({ _id: id, owner: _id }, req.body, { new: true });
         if (!result) {
             throw HttpError(404, "Not found")
         }
