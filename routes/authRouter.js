@@ -1,5 +1,4 @@
 import express from "express";
-import { isValidId } from "../middlewares/isValidId.js";
 import { register, login, getCurrent, logout, updateSubscription } from "../controllers/authController.js";
 import { validateRegisterBody, validateLoginBody, validateUpdateSubscription } from "../models/user.js";
 import { authenticate } from "../middlewares/authenticate.js";
