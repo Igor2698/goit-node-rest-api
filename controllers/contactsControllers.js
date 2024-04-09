@@ -15,14 +15,20 @@ import { Contact } from "../models/contact.js";
 import { HttpError } from "../helpers/index.js";
 
 
-import { updateContactSchema, createContactSchema } from "../shemas/contactsSchemas.js";
 
 
 
 export const getAllContacts = async (req, res, next) => {
     try {
-        const result = await Contact.find({});
-        console.log(result)
+        const { _id: owner } = req.user;
+        const { page = 1, limit = 10, favorite } = req.query;
+        const skip = (page - 1) * limit;
+        let query = { owner };
+        if (favorite !== undefined) {
+            query.favorite = favorite;
+        }
+
+        const result = await Contact.find(query, "-createdAt -updatedAt", { skip, limit }).populate("owner", "name email");
         res.json(result);
     }
     catch (error) {
@@ -33,7 +39,8 @@ export const getAllContacts = async (req, res, next) => {
 export const getOneContact = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const result = await Contact.findById(id);
+        const { _id: owner } = req.user;
+        const result = await Contact.findOne({ _id: id, owner: owner });
         if (!result) {
             throw HttpError(404, "Not found")
         }
@@ -46,8 +53,9 @@ export const getOneContact = async (req, res, next) => {
 
 export const deleteContact = async (req, res, next) => {
     try {
+        const { _id: owner } = req.user;
         const { id } = req.params;
-        const result = await Contact.findByIdAndRemove(id);
+        const result = await Contact.findOneAndDelete({ _id: id, owner: owner });
         if (!result) {
             throw HttpError(404, "Not found")
         }
@@ -59,7 +67,9 @@ export const deleteContact = async (req, res, next) => {
 
 export const createContact = async (req, res, next) => {
     try {
-        const result = await Contact.create(req.body)
+        const { _id: owner } = req.user;
+        const result = await Contact.create({ ...req.body, owner });
+
         res.status(201).json(result);
     } catch (error) {
         next(error);
@@ -70,14 +80,17 @@ export const createContact = async (req, res, next) => {
 export const updateContact = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const { _id } = req.user;
+
         const fielsInRequest = Object.keys(req.body).length
         if (!fielsInRequest) {
             throw HttpError(400, "Body must have at least one field")
         }
-        const result = await Contact.findByIdAndUpdate(id, req.body, { new: true })
+        const result = await Contact.findOneAndUpdate({ _id: id, owner: _id }, req.body, { new: true });
         if (!result) {
             throw HttpError(404, "Not found")
         }
+
         res.json(result);
     } catch (e) {
         next(e);
@@ -88,12 +101,14 @@ export const updateContact = async (req, res, next) => {
 export const updateFavorit = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const result = await Contact.findByIdAndUpdate(id, req.body, { new: true })
+        const { _id } = req.user;
+
+        const result = await Contact.findOneAndUpdate({ _id: id, owner: _id }, req.body, { new: true })
         if (!result) {
             throw HttpError(404, "Not found")
         }
         res.json(result);
     } catch (e) {
-        next(e);
+        next(e);    
     }
 }

@@ -20,6 +20,8 @@ export const updateFavoriteSchema = Joi.object({
 })
 
 
+
+
 export const validateAddContactBody = validateBody(createContactSchema);
 export const validateChangeContactBody = validateBody(updateContactSchema);
 export const validateChangeFavoriteBody = validateBody(updateFavoriteSchema);
