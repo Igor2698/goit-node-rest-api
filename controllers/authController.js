@@ -111,22 +111,33 @@ export const updateSubscription = async (req, res) => {
     res.json({ message: "Successfully updated" })
 }
 
-export const updateAvatar = async (req, res) => {
-    const { _id } = req.user;
-    const { path: tempUpload, originalname } = req.file;
-    const filename = `${_id}_${originalname}`;
-    const resultUpload = path.join(avatarsDir, filename);
+export const updateAvatar = async (req, res, next) => {
 
-    const image = await jimp.read(tempUpload);
-    image.resize(250, 250);
-    await image.writeAsync(resultUpload);
-    await fs.unlink(tempUpload);
+    try {
+        const { _id } = req.user;
+        if (!req.file) {
+            throw HttpError(400, 'Must be a photo')
+        }
 
-    const avatarURL = path.join('avatars', filename);
-    await User.findByIdAndUpdate(_id, { avatarURL });
+        const { path: tempUpload, originalname } = req.file;
+        const filename = `${_id}_${originalname}`;
+        const resultUpload = path.join(avatarsDir, filename);
 
-    res.json({
-        avatarURL,
-    })
+        const image = await jimp.read(tempUpload);
+        image.resize(250, 250);
+        await image.writeAsync(resultUpload);
+        await fs.unlink(tempUpload);
+
+        const avatarURL = path.join('avatars', filename);
+        await User.findByIdAndUpdate(_id, { avatarURL });
+
+        res.json({
+            avatarURL,
+        })
+    }
+    catch (e) {
+        next(e)
+    }
+
 
 }
