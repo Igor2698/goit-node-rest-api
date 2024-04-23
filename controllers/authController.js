@@ -45,12 +45,10 @@ export const register = async (req, res, next) => {
 
         const newUser = await User.create({ ...req.body, password: hashPassword, avatarURL, verificationCode });
 
-
-
         const verifyEmail = {
             to: email,
             subject: "Verify email",
-            html: `<a target="_blank" href="http://localhost:3000/api/auth/verify/${verificationCode}">Click verify email</a>`
+            html: `<a target="_blank" href="http://localhost:3000/api/users/verify/${verificationCode}">Click verify email</a>`
         }
 
         await sendEmail(verifyEmail);
@@ -66,13 +64,52 @@ export const register = async (req, res, next) => {
     catch (e) {
         next(e)
     }
-
 }
 
 
 export const verifyEmail = async (req, res) => {
     const { verificationCode } = req.params;
+
+    console.log(req.params)
     const user = await User.findOne({ verificationCode });
+    if (!user) {
+        throw HttpError(404, "User not found");
+    }
+
+    await User.findByIdAndUpdate(user._id, { verify: true, verificationCode: null })
+
+    res.json({ message: "Verification successful" })
+}
+
+export const resendVerifyEmail = async (req, res, next) => {
+
+    try {
+        const { email } = req.body;
+        if(!email) { 
+            throw HttpError(400, "missing required field email")
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            throw HttpError(401, "Email not found");
+        }
+        if (user.verify) {
+            throw HttpError(400, "Verification has already been passed")
+        }
+        const verifyEmail = {
+            to: email,
+            subject: "Verify email",
+            html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${user.verificationCode}">Click verify email</a>`
+        };
+
+        await sendEmail(verifyEmail);
+
+        res.json({
+            message: "Verify email send success"
+        })
+    }
+    catch (e) {
+        next(e)
+    }
 
 }
 
@@ -84,6 +121,11 @@ export const login = async (req, res, next) => {
         if (!user) {
             throw HttpError(401, 'Email or password invalid')
         }
+
+        if (!user.verify) {
+            throw HttpError(401, "Email not verified");
+        }
+
         const passwordCompare = await bcrypt.compare(password, user.password);
         if (!passwordCompare) {
             throw HttpError(401, "Email or password invalid");
