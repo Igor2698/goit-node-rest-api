@@ -8,6 +8,8 @@ import jimp from 'jimp'
 
 import fs from 'fs/promises'
 
+import { sendEmail } from "../helpers/sendEmail.js";
+import { nanoid } from "nanoid";
 
 import dotenv from "dotenv";
 dotenv.config()
@@ -39,8 +41,19 @@ export const register = async (req, res, next) => {
 
         const hashPassword = await bcrypt.hash(password, 10);
         const avatarURL = gravatar.url(email);
+        const verificationCode = nanoid();
 
-        const newUser = await User.create({ ...req.body, password: hashPassword, avatarURL });
+        const newUser = await User.create({ ...req.body, password: hashPassword, avatarURL, verificationCode });
+
+
+
+        const verifyEmail = {
+            to: email,
+            subject: "Verify email",
+            html: `<a target="_blank" href="http://localhost:3000/api/auth/verify/${verificationCode}">Click verify email</a>`
+        }
+
+        await sendEmail(verifyEmail);
 
         res.status(201).json({
             user: {
@@ -53,6 +66,13 @@ export const register = async (req, res, next) => {
     catch (e) {
         next(e)
     }
+
+}
+
+
+export const verifyEmail = async (req, res) => {
+    const { verificationCode } = req.params;
+    const user = await User.findOne({ verificationCode });
 
 }
 
