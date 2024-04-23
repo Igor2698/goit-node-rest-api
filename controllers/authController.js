@@ -3,16 +3,30 @@ import HttpError from "../helpers/HttpError.js";
 import { User } from "../models/user.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import gravatar from 'gravatar'
+import jimp from 'jimp'
+
+import fs from 'fs/promises'
+
 
 import dotenv from "dotenv";
 dotenv.config()
 
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { dirname } from 'path';
+
 
 
 
 const { SECRET_KEY } = process.env;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+const avatarsDir = path.join(__dirname, "../", "public", "avatars");
+
 
 export const register = async (req, res, next) => {
 
@@ -24,7 +38,9 @@ export const register = async (req, res, next) => {
         }
 
         const hashPassword = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ ...req.body, password: hashPassword });
+        const avatarURL = gravatar.url(email);
+
+        const newUser = await User.create({ ...req.body, password: hashPassword, avatarURL });
 
         res.status(201).json({
             user: {
@@ -93,4 +109,35 @@ export const updateSubscription = async (req, res) => {
     const { subscription } = req.body;
     await User.findByIdAndUpdate(_id, { subscription })
     res.json({ message: "Successfully updated" })
+}
+
+export const updateAvatar = async (req, res, next) => {
+
+    try {
+        const { _id } = req.user;
+        if (!req.file) {
+            throw HttpError(400, 'Must be a photo')
+        }
+
+        const { path: tempUpload, originalname } = req.file;
+        const filename = `${_id}_${originalname}`;
+        const resultUpload = path.join(avatarsDir, filename);
+
+        const image = await jimp.read(tempUpload);
+        image.resize(250, 250);
+        await image.writeAsync(resultUpload);
+        await fs.unlink(tempUpload);
+
+        const avatarURL = path.join('avatars', filename);
+        await User.findByIdAndUpdate(_id, { avatarURL });
+
+        res.json({
+            avatarURL,
+        })
+    }
+    catch (e) {
+        next(e)
+    }
+
+
 }
