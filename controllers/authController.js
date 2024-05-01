@@ -67,25 +67,31 @@ export const register = async (req, res, next) => {
 }
 
 
-export const verifyEmail = async (req, res) => {
-    const { verificationCode } = req.params;
+export const verifyEmail = async (req, res, next) => {
 
-    console.log(req.params)
-    const user = await User.findOne({ verificationCode });
-    if (!user) {
-        throw HttpError(404, "User not found");
-    }
+    try {
+        const { verificationCode } = req.params;
 
-    await User.findByIdAndUpdate(user._id, { verify: true, verificationCode: null })
 
-    res.json({ message: "Verification successful" })
+        const user = await User.findOne({ verificationCode });
+        if (!user) {
+            throw HttpError(404, "User not found");
+        }
+
+        await User.findByIdAndUpdate(user._id, { verify: true, verificationCode: null })
+
+        res.json({ message: "Verification successful" })
+    } catch (e) { next(e) }
+
+
+
 }
 
 export const resendVerifyEmail = async (req, res, next) => {
 
     try {
         const { email } = req.body;
-        if(!email) { 
+        if (!email) {
             throw HttpError(400, "missing required field email")
         }
         const user = await User.findOne({ email });
@@ -98,7 +104,7 @@ export const resendVerifyEmail = async (req, res, next) => {
         const verifyEmail = {
             to: email,
             subject: "Verify email",
-            html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${user.verificationCode}">Click verify email</a>`
+            html: `<a target="_blank" href="http://localhost:3000/api/auth/verify/${user.verificationCode}">Click verify email</a>`
         };
 
         await sendEmail(verifyEmail);
